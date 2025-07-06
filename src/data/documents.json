@@ -1,0 +1,70 @@
+{
+  "documents": [
+    {
+      "id": 1,
+      "title": "Analyse Mathématique - Limites et Continuité",
+      "type": "cours",
+      "subject": "Mathématiques",
+      "level": "Terminale",
+      "thumbnail": "https://images.pexels.com/photos/6256/mathematics-blackboard-education-classroom.jpg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Cours complet sur les limites et la continuité des fonctions",
+      "pages": 45,
+      "downloadUrl": "#"
+    },
+    {
+      "id": 2,
+      "title": "Physique Quantique - Introduction",
+      "type": "cours",
+      "subject": "Physique",
+      "level": "Prépa",
+      "thumbnail": "https://images.pexels.com/photos/256262/pexels-photo-256262.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Les bases de la mécanique quantique",
+      "pages": 67,
+      "downloadUrl": "#"
+    },
+    {
+      "id": 3,
+      "title": "Exercices Corrigés - Algèbre Linéaire",
+      "type": "exercices",
+      "subject": "Mathématiques",
+      "level": "Prépa",
+      "thumbnail": "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "50 exercices corrigés d'algèbre linéaire",
+      "pages": 89,
+      "downloadUrl": "#"
+    },
+    {
+      "id": 4,
+      "title": "Chimie Organique - Réactions",
+      "type": "fiches",
+      "subject": "Chimie",
+      "level": "Terminale",
+      "thumbnail": "https://images.pexels.com/photos/2280549/pexels-photo-2280549.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Fiches de révision sur les réactions organiques",
+      "pages": 23,
+      "downloadUrl": "#"
+    },
+    {
+      "id": 5,
+      "title": "Programmation Python - Structures de Données",
+      "type": "cours",
+      "subject": "Informatique",
+      "level": "Université",
+      "thumbnail": "https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Guide complet des structures de données en Python",
+      "pages": 112,
+      "downloadUrl": "#"
+    },
+    {
+      "id": 6,
+      "title": "Histoire de la Tunisie Moderne",
+      "type": "cours",
+      "subject": "Histoire",
+      "level": "Terminale",
+      "thumbnail": "https://images.pexels.com/photos/1370295/pexels-photo-1370295.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "L'évolution de la Tunisie au XXe siècle",
+      "pages": 78,
+      "downloadUrl": "#"
+    }
+  ]
+}
