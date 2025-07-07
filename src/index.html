@@ -6,39 +6,98 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="A modern creative studio website" />
     <link rel="icon" type="image/png" href="https://favicon.io/favicon-generator/?text=E&background=%23667eea&color=ffffff&font=montserrat">
-
     <base href="/">
   </head>
   <body>
     <app-root>
-      <div style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      ">
-        <div style="text-align: center;">
-          <div style="
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top: 3px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-          "></div>
-          <p>Loading...</p>
+      <div style="text-align: center;">
+        <div class="gyro-container">
+          <div class="ring ring3"></div>
+          <div class="ring ring2"></div>
+          <div class="ring ring1"></div>
+          <div class="center-letter">E</div>
         </div>
+        <p>Loading...</p>
       </div>
       <style>
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        body {
+          margin: 0;
+          padding: 0;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          color: white;
+        }
+      
+        .gyro-container {
+          position: relative;
+          width: 120px;
+          height: 120px;
+          perspective: 1000px;
+          margin-bottom: 20px;
+        }
+      
+        .ring {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform-style: preserve-3d;
+          transform: translate(-50%, -50%);
+          border: 2px solid white;
+          border-radius: 50%;
+        }
+      
+        .ring1 {
+          width: 80px;
+          height: 80px;
+          animation: spinY 3s linear infinite;
+        }
+      
+        .ring2 {
+          width: 100px;
+          height: 100px;
+          animation: spinX 4s linear infinite;
+        }
+      
+        .ring3 {
+          width: 120px;
+          height: 120px;
+          animation: spinZ 5s linear infinite;
+        }
+      
+        .center-letter {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-size: 36px;
+          font-weight: bold;
+          color: white;
+          z-index: 10;
+          pointer-events: none;
+          text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+      
+        @keyframes spinY {
+          0% { transform: translate(-50%, -50%) rotateY(0deg); }
+          100% { transform: translate(-50%, -50%) rotateY(360deg); }
+        }
+      
+        @keyframes spinX {
+          0% { transform: translate(-50%, -50%) rotateX(0deg); }
+          100% { transform: translate(-50%, -50%) rotateX(360deg); }
+        }
+      
+        @keyframes spinZ {
+          0% { transform: translate(-50%, -50%) rotateZ(0deg); }
+          100% { transform: translate(-50%, -50%) rotateZ(360deg); }
         }
       </style>
+      
     </app-root>
   </body>
+  
 </html>
