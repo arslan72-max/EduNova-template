@@ -57,7 +57,7 @@ import { AuthService, User } from '../../services/auth.service';
             <a href='#more' title="More">&#9776;</a>
             <ul class="dropdown-content" [class.show]="dropdowns.more">
               <li *ngIf="isLoggedIn"><a routerLink="/profile">Profil</a></li>
-              <li *ngIf="!isLoggedIn"><a href="#">Paramètres</a></li>
+              <li><a routerLink="/settings">Paramètres</a></li>
               <li *ngIf="isLoggedIn"><a href="#" (click)="logout($event)">Déconnexion</a></li>
               <li *ngIf="!isLoggedIn"><a routerLink="/connect">Connexion</a></li>
             </ul>
