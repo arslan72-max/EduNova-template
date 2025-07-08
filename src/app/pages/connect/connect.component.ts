@@ -31,6 +31,46 @@ import { AuthService } from '../../../services/auth.service';
                 required>
             </div>
 
+            <div class="form-group" *ngIf="!isLogin">
+              <label for="level">Niveau d'études</label>
+              <select 
+                id="level" 
+                [(ngModel)]="formData.level"
+                name="level"
+                required>
+                <option value="">Sélectionnez votre niveau</option>
+                <option value="Terminale">Terminale</option>
+                <option value="1ère année Prépa">1ère année Prépa</option>
+                <option value="2ème année Prépa">2ème année Prépa</option>
+                <option value="1ère année Université">1ère année Université</option>
+                <option value="2ème année Université">2ème année Université</option>
+                <option value="3ème année Université">3ème année Université</option>
+                <option value="Master">Master</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+
+            <div class="form-group" *ngIf="!isLogin">
+              <label for="specialty">Spécialité</label>
+              <select 
+                id="specialty" 
+                [(ngModel)]="formData.specialty"
+                name="specialty"
+                required>
+                <option value="">Sélectionnez votre spécialité</option>
+                <option value="Sciences Mathématiques">Sciences Mathématiques</option>
+                <option value="Sciences Expérimentales">Sciences Expérimentales</option>
+                <option value="Sciences Techniques">Sciences Techniques</option>
+                <option value="Lettres">Lettres</option>
+                <option value="Économie et Gestion">Économie et Gestion</option>
+                <option value="Physique-Chimie">Physique-Chimie</option>
+                <option value="Mathématiques-Informatique">Mathématiques-Informatique</option>
+                <option value="Informatique">Informatique</option>
+                <option value="Technologie">Technologie</option>
+                <option value="Autre">Autre</option>
+              </select>
+            </div>
+
             <div class="form-group">
               <label for="email">Email</label>
               <input 
@@ -66,6 +106,10 @@ import { AuthService } from '../../../services/auth.service';
 
             <div class="error-message" *ngIf="errorMessage">
               {{ errorMessage }}
+            </div>
+
+            <div class="success-message" *ngIf="successMessage">
+              {{ successMessage }}
             </div>
 
             <button type="submit" class="auth-btn">
@@ -183,11 +227,31 @@ import { AuthService } from '../../../services/auth.service';
       backdrop-filter: blur(10px);
     }
 
+    .form-group select {
+      width: 100%;
+      padding: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      cursor: pointer;
+    }
+
+    .form-group select option {
+      background: #333;
+      color: white;
+      padding: 0.5rem;
+    }
+
     .form-group input::placeholder {
       color: rgba(255, 255, 255, 0.6);
     }
 
-    .form-group input:focus {
+    .form-group input:focus,
+    .form-group select:focus {
       outline: none;
       border-color: rgba(255, 255, 255, 0.6);
       background: rgba(255, 255, 255, 0.15);
@@ -198,6 +262,17 @@ import { AuthService } from '../../../services/auth.service';
       background: rgba(220, 53, 69, 0.2);
       border: 1px solid rgba(220, 53, 69, 0.5);
       color: #ff6b6b;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .success-message {
+      background: rgba(40, 167, 69, 0.2);
+      border: 1px solid rgba(40, 167, 69, 0.5);
+      color: #28a745;
       padding: 0.75rem;
       border-radius: 8px;
       margin-bottom: 1rem;
@@ -373,11 +448,14 @@ import { AuthService } from '../../../services/auth.service';
 export class ConnectComponent {
   isLogin = true;
   errorMessage = '';
+  successMessage = '';
   formData = {
     fullName: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    level: '',
+    specialty: ''
   };
 
   demoAccounts = [
@@ -397,11 +475,14 @@ export class ConnectComponent {
   toggleMode() {
     this.isLogin = !this.isLogin;
     this.errorMessage = '';
+    this.successMessage = '';
     this.formData = {
       fullName: '',
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      level: '',
+      specialty: ''
     };
   }
 
@@ -413,6 +494,7 @@ export class ConnectComponent {
 
   onSubmit() {
     this.errorMessage = '';
+    this.successMessage = '';
 
     if (this.isLogin) {
       this.authService.login(this.formData.email, this.formData.password).subscribe({
@@ -432,17 +514,53 @@ export class ConnectComponent {
       this.authService.register({
         fullName: this.formData.fullName,
         email: this.formData.email,
-        password: this.formData.password
+        password: this.formData.password,
+        level: this.formData.level,
+        specialty: this.formData.specialty
       }).subscribe({
         next: (response) => {
-          alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-          this.isLogin = true;
-          this.formData = {
-            fullName: '',
-            email: '',
-            password: '',
-            confirmPassword: ''
-          };
+          // Auto-login after successful registration
+          if (response.token) {
+            this.successMessage = 'Compte créé avec succès ! Redirection...';
+            setTimeout(() => {
+              this.router.navigate(['/dashboard']);
+            }, 1500);
+          } else {
+            this.successMessage = 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.';
+            setTimeout(() => {
+              this.isLogin = true;
+              this.successMessage = '';
+              this.formData = {
+                fullName: '',
+                email: '',
+                password: '',
+                confirmPassword: '',
+                level: '',
+                specialty: ''
+              };
+            }, 2000);
+          }
+        },
+        error: (error) => {
+          this.errorMessage = error.error?.message || 'Erreur lors de la création du compte';
+        }
+      });
+    }
+  }
+}
+            this.router.navigate(['/dashboard']);
+          } else {
+            alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+            this.isLogin = true;
+            this.formData = {
+              fullName: '',
+              email: '',
+              password: '',
+              confirmPassword: '',
+              level: '',
+              specialty: ''
+            };
+          }
         },
         error: (error) => {
           this.errorMessage = error.error?.message || 'Erreur lors de la création du compte';

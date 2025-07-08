@@ -100,7 +100,15 @@ export class ApiService {
   }
 
   register(userData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/register`, userData);
+    return this.http.post(`${this.baseUrl}/auth/register`, userData)
+      .pipe(
+        tap((response: any) => {
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+            this.currentUserSubject.next(response.user);
+          }
+        })
+      );
   }
 
   getCurrentUser(): Observable<User> {

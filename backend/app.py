@@ -398,9 +398,21 @@ def register():
     full_name = data.get('fullName')
     email = data.get('email')
     password = data.get('password')
+    level = data.get('level', 'Non spécifié')
+    specialty = data.get('specialty', 'Non spécifié')
     
     if not all([full_name, email, password]):
         return jsonify({'message': 'All fields required'}), 400
+    
+    # Validate email format
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return jsonify({'message': 'Invalid email format'}), 400
+    
+    # Validate password strength
+    if len(password) < 6:
+        return jsonify({'message': 'Password must be at least 6 characters long'}), 400
     
     conn = get_db_connection()
     
@@ -417,21 +429,33 @@ def register():
     password_hash = generate_password_hash(password)
     join_date = datetime.now().strftime('%Y-%m-%d')
     
+    # Default avatar based on name
+    default_avatars = [
+        'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+    ]
+    avatar = default_avatars[hash(email) % len(default_avatars)]
+    
     cursor = conn.execute('''
         INSERT INTO users (full_name, email, password_hash, avatar, level, specialty, join_date)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (full_name, email, password_hash, 
-          'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          'Non spécifié', 'Non spécifié', join_date))
+    ''', (full_name, email, password_hash, avatar, level, specialty, join_date))
     
     user_id = cursor.lastrowid
     
     # Create default settings
     conn.execute('INSERT INTO user_settings (user_id) VALUES (?)', (user_id,))
     conn.commit()
+    
+    # Get the created user
+    user = conn.execute(
+        'SELECT * FROM users WHERE id = ?', (user_id,)
+    ).fetchone()
     conn.close()
     
-    return jsonify({'message': 'User created successfully'}), 201
 
 @app.route('/api/auth/me', methods=['GET'])
 @token_required
