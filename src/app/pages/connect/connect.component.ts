@@ -519,7 +519,6 @@ export class ConnectComponent {
         specialty: this.formData.specialty
       }).subscribe({
         next: (response) => {
-          // Auto-login after successful registration
           if (response.token) {
             this.successMessage = 'Compte créé avec succès ! Redirection...';
             setTimeout(() => {
@@ -539,27 +538,6 @@ export class ConnectComponent {
                 specialty: ''
               };
             }, 2000);
-          }
-        },
-        error: (error) => {
-          this.errorMessage = error.error?.message || 'Erreur lors de la création du compte';
-        }
-      });
-    }
-  }
-}
-            this.router.navigate(['/dashboard']);
-          } else {
-            alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-            this.isLogin = true;
-            this.formData = {
-              fullName: '',
-              email: '',
-              password: '',
-              confirmPassword: '',
-              level: '',
-              specialty: ''
-            };
           }
         },
         error: (error) => {
