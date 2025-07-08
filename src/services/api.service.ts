@@ -126,6 +126,10 @@ export class ApiService {
     return !!localStorage.getItem('token');
   }
 
+  getCurrentUserValue(): User | null {
+    return this.currentUserSubject.value;
+  }
+
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
     let params = new HttpParams();
