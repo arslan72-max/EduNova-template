@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import accountsData from '../data/accounts.json';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { ApiService } from './api.service';
+import { Router } from '@angular/router';
 
 export interface User {
   id: number;
@@ -16,51 +17,32 @@ export interface User {
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
-  public currentUser$ = this.currentUserSubject.asObservable();
+  public currentUser$ = this.apiService.currentUser$;
 
-  constructor() {
-    // Check if user is already logged in
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      this.currentUserSubject.next(JSON.parse(savedUser));
-    }
+  constructor(
+    private apiService: ApiService,
+    private router: Router
+  ) {
   }
 
-  login(email: string, password: string): boolean {
-    const account = accountsData.accounts.find(
-      acc => acc.email === email && acc.password === password
-    );
+  login(email: string, password: string): Observable<any> {
+    return this.apiService.login(email, password);
+  }
 
-    if (account) {
-      const user: User = {
-        id: account.id,
-        fullName: account.fullName,
-        email: account.email,
-        avatar: account.avatar,
-        level: account.level,
-        specialty: account.specialty,
-        joinDate: account.joinDate
-      };
-      
-      this.currentUserSubject.next(user);
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      return true;
-    }
-    
-    return false;
+  register(userData: any): Observable<any> {
+    return this.apiService.register(userData);
   }
 
   logout(): void {
-    this.currentUserSubject.next(null);
-    localStorage.removeItem('currentUser');
+    this.apiService.logout();
+    this.router.navigate(['/home']);
   }
 
   getCurrentUser(): User | null {
-    return this.currentUserSubject.value;
+    return this.apiService.currentUser$.value;
   }
 
   isLoggedIn(): boolean {
-    return this.currentUserSubject.value !== null;
+    return this.apiService.isLoggedIn();
   }
 }

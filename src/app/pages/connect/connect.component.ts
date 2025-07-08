@@ -415,29 +415,39 @@ export class ConnectComponent {
     this.errorMessage = '';
 
     if (this.isLogin) {
-      const success = this.authService.login(this.formData.email, this.formData.password);
-      if (success) {
-        this.router.navigate(['/dashboard']);
-      } else {
-        this.errorMessage = 'Email ou mot de passe incorrect';
-      }
+      this.authService.login(this.formData.email, this.formData.password).subscribe({
+        next: (response) => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: (error) => {
+          this.errorMessage = 'Email ou mot de passe incorrect';
+        }
+      });
     } else {
       if (this.formData.password !== this.formData.confirmPassword) {
         this.errorMessage = 'Les mots de passe ne correspondent pas';
         return;
       }
       
-      // For demo purposes, we'll just show a success message
-      // In a real app, you'd create the account here
-      this.errorMessage = '';
-      alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
-      this.isLogin = true;
-      this.formData = {
-        fullName: '',
-        email: '',
-        password: '',
-        confirmPassword: ''
-      };
+      this.authService.register({
+        fullName: this.formData.fullName,
+        email: this.formData.email,
+        password: this.formData.password
+      }).subscribe({
+        next: (response) => {
+          alert('Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+          this.isLogin = true;
+          this.formData = {
+            fullName: '',
+            email: '',
+            password: '',
+            confirmPassword: ''
+          };
+        },
+        error: (error) => {
+          this.errorMessage = error.error?.message || 'Erreur lors de la création du compte';
+        }
+      });
     }
   }
 }

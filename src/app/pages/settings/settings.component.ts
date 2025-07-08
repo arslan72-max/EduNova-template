@@ -1,28 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-interface SettingsData {
-  theme: 'light' | 'dark' | 'auto';
-  language: 'fr' | 'en' | 'ar';
-  notifications: {
-    email: boolean;
-    push: boolean;
-    newCourses: boolean;
-    reminders: boolean;
-  };
-  privacy: {
-    profileVisibility: 'public' | 'private' | 'friends';
-    showProgress: boolean;
-    allowMessages: boolean;
-  };
-  preferences: {
-    autoplay: boolean;
-    subtitles: boolean;
-    playbackSpeed: number;
-    downloadQuality: 'low' | 'medium' | 'high';
-  };
-}
+import { ApiService, Settings } from '../../../services/api.service';
 
 @Component({
   selector: 'app-settings',
@@ -539,7 +518,7 @@ interface SettingsData {
   `]
 })
 export class SettingsComponent implements OnInit {
-  settings: SettingsData = {
+  settings: Settings = {
     theme: 'auto',
     language: 'fr',
     notifications: {
@@ -564,24 +543,63 @@ export class SettingsComponent implements OnInit {
   showSaveNotification = false;
   showDeleteConfirmation = false;
 
+  constructor(private apiService: ApiService) {}
+
   ngOnInit() {
     this.loadSettings();
   }
 
   loadSettings() {
-    const savedSettings = localStorage.getItem('eduNovaSettings');
-    if (savedSettings) {
-      this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+    if (this.apiService.isLoggedIn()) {
+      this.apiService.getSettings().subscribe({
+        next: (settings) => {
+          this.settings = settings;
+        },
+        error: (error) => {
+          console.error('Error loading settings:', error);
+          // Fallback to localStorage for non-authenticated users
+          const savedSettings = localStorage.getItem('eduNovaSettings');
+          if (savedSettings) {
+            this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+          }
+        }
+      });
+    } else {
+      // Load from localStorage for non-authenticated users
+      const savedSettings = localStorage.getItem('eduNovaSettings');
+      if (savedSettings) {
+        this.settings = { ...this.settings, ...JSON.parse(savedSettings) };
+      }
     }
   }
 
   saveSettings() {
-    localStorage.setItem('eduNovaSettings', JSON.stringify(this.settings));
-    this.showSaveNotification = true;
-    
-    setTimeout(() => {
-      this.showSaveNotification = false;
-    }, 3000);
+    if (this.apiService.isLoggedIn()) {
+      this.apiService.updateSettings(this.settings).subscribe({
+        next: () => {
+          this.showSaveNotification = true;
+          setTimeout(() => {
+            this.showSaveNotification = false;
+          }, 3000);
+        },
+        error: (error) => {
+          console.error('Error saving settings:', error);
+          // Fallback to localStorage
+          localStorage.setItem('eduNovaSettings', JSON.stringify(this.settings));
+          this.showSaveNotification = true;
+          setTimeout(() => {
+            this.showSaveNotification = false;
+          }, 3000);
+        }
+      });
+    } else {
+      // Save to localStorage for non-authenticated users
+      localStorage.setItem('eduNovaSettings', JSON.stringify(this.settings));
+      this.showSaveNotification = true;
+      setTimeout(() => {
+        this.showSaveNotification = false;
+      }, 3000);
+    }
   }
 
   resetSettings() {

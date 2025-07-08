@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService, User } from '../../../services/auth.service';
+import { ApiService } from '../../../services/api.service';
 
 @Component({
   selector: 'app-profile',
@@ -362,15 +363,37 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   private animationIntervals: any[] = [];
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private apiService: ApiService
+  ) {}
 
   ngOnInit() {
     this.authService.currentUser$.subscribe(user => {
       this.user = user;
       if (user) {
+        this.loadUserStats();
         this.startCountingAnimations();
       }
     });
+  }
+
+  loadUserStats() {
+    if (this.apiService.isLoggedIn()) {
+      this.apiService.getUserStats().subscribe({
+        next: (stats) => {
+          this.targetStats = {
+            courses: stats.courses || 24,
+            exercises: stats.exercises || 156,
+            successRate: stats.successRate || 89,
+            hoursThisWeek: stats.hoursThisWeek || 12
+          };
+        },
+        error: (error) => {
+          console.error('Error loading user stats:', error);
+        }
+      });
+    }
   }
 
   ngOnDestroy() {

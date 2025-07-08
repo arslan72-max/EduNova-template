@@ -1,32 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import documentsData from '../../../data/documents.json';
-import videosData from '../../../data/videos.json';
-
-interface Document {
-  id: number;
-  title: string;
-  type: string;
-  subject: string;
-  level: string;
-  thumbnail: string;
-  description: string;
-  pages: number;
-  downloadUrl: string;
-}
-
-interface Video {
-  id: number;
-  title: string;
-  subject: string;
-  level: string;
-  duration: string;
-  thumbnail: string;
-  description: string;
-  views: number;
-  videoUrl: string;
-}
+import { ApiService, Document, Video } from '../../../services/api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -464,53 +439,62 @@ export class DashboardComponent implements OnInit {
   selectedType = '';
   activeTab = 'documents';
 
+  constructor(private apiService: ApiService) {}
+
   ngOnInit() {
-    this.documents = documentsData.documents;
-    this.videos = videosData.videos;
-    this.filteredDocuments = [...this.documents];
-    this.filteredVideos = [...this.videos];
+    this.loadDocuments();
+    this.loadVideos();
+  }
+
+  loadDocuments() {
+    const filters = {
+      search: this.searchQuery,
+      subject: this.selectedSubject,
+      level: this.selectedLevel,
+      type: this.selectedType
+    };
+
+    this.apiService.getDocuments(filters).subscribe({
+      next: (response) => {
+        this.documents = response.documents;
+        this.filteredDocuments = response.documents;
+      },
+      error: (error) => {
+        console.error('Error loading documents:', error);
+      }
+    });
+  }
+
+  loadVideos() {
+    const filters = {
+      search: this.searchQuery,
+      subject: this.selectedSubject,
+      level: this.selectedLevel
+    };
+
+    this.apiService.getVideos(filters).subscribe({
+      next: (response) => {
+        this.videos = response.videos;
+        this.filteredVideos = response.videos;
+      },
+      error: (error) => {
+        console.error('Error loading videos:', error);
+      }
+    });
   }
 
   onSearch() {
-    this.applyFilters();
+    this.loadDocuments();
+    this.loadVideos();
   }
 
   onFilter() {
-    this.applyFilters();
+    this.loadDocuments();
+    this.loadVideos();
   }
 
   setActiveTab(tab: string) {
     this.activeTab = tab;
-  }
-
-  private applyFilters() {
-    // Filter documents
-    this.filteredDocuments = this.documents.filter(doc => {
-      const matchesSearch = !this.searchQuery || 
-        doc.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        doc.description.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        doc.subject.toLowerCase().includes(this.searchQuery.toLowerCase());
-      
-      const matchesSubject = !this.selectedSubject || doc.subject === this.selectedSubject;
-      const matchesLevel = !this.selectedLevel || doc.level === this.selectedLevel;
-      const matchesType = !this.selectedType || this.selectedType === 'videos' || doc.type === this.selectedType;
-      
-      return matchesSearch && matchesSubject && matchesLevel && matchesType;
-    });
-
-    // Filter videos
-    this.filteredVideos = this.videos.filter(video => {
-      const matchesSearch = !this.searchQuery || 
-        video.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        video.description.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        video.subject.toLowerCase().includes(this.searchQuery.toLowerCase());
-      
-      const matchesSubject = !this.selectedSubject || video.subject === this.selectedSubject;
-      const matchesLevel = !this.selectedLevel || video.level === this.selectedLevel;
-      const matchesType = !this.selectedType || this.selectedType !== 'cours' && this.selectedType !== 'exercices' && this.selectedType !== 'fiches';
-      
-      return matchesSearch && matchesSubject && matchesLevel && matchesType;
-    });
   }
 
   formatViews(views: number): string {
