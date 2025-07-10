@@ -26,7 +26,7 @@
             }
           },
           "options": {
-            "assets": ["src/assets", "src/data"],
+            "assets": ["src/assets"],
             "index": "src/index.html",
             "browser": "src/main.ts",
             "outputPath": "dist/demo",

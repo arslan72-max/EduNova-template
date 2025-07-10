@@ -76,7 +76,7 @@ export class ApiService {
 
   // Authentication methods
   login(email: string, password: string): Observable<any> {
-    return this.http.get<any>('/data/accounts.json').pipe(
+    return this.http.get<any>('/assets/data/accounts.json').pipe(
       delay(500), // Simulate network delay
       map(data => {
         const user = data.accounts.find((account: any) => 
@@ -107,7 +107,7 @@ export class ApiService {
   }
 
   register(userData: any): Observable<any> {
-    return this.http.get<any>('/data/accounts.json').pipe(
+    return this.http.get<any>('/assets/data/accounts.json').pipe(
       delay(500), // Simulate network delay
       map(data => {
         // Check if user already exists
@@ -174,7 +174,7 @@ export class ApiService {
 
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
-    return this.http.get<any>('/data/documents.json').pipe(
+    return this.http.get<any>('/assets/data/documents.json').pipe(
       map(data => {
         let documents = data.documents;
         
@@ -207,7 +207,7 @@ export class ApiService {
   }
 
   getVideos(filters?: any): Observable<{ videos: Video[] }> {
-    return this.http.get<any>('/data/videos.json').pipe(
+    return this.http.get<any>('/assets/data/videos.json').pipe(
       map(data => {
         let videos = data.videos;
         
