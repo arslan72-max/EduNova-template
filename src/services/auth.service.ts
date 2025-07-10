@@ -39,7 +39,7 @@ export class AuthService {
   }
 
   getCurrentUser(): User | null {
-    return this.apiService.currentUser$.value;
+    return this.apiService.getCurrentUserValue();
   }
 
   isLoggedIn(): boolean {
