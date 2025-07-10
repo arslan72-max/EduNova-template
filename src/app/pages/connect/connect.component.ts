@@ -507,7 +507,7 @@ export class ConnectComponent {
         next: (response) => {
           this.successMessage = 'Connexion réussie ! Redirection...';
           setTimeout(() => {
-          this.router.navigate(['/dashboard']);
+            this.router.navigate(['/dashboard']);
           }, 1000);
         },
         error: (error) => {

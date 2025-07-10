@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { Router } from '@angular/router';
 
@@ -22,8 +22,7 @@ export class AuthService {
   constructor(
     private apiService: ApiService,
     private router: Router
-  ) {
-  }
+  ) {}
 
   login(email: string, password: string): Observable<any> {
     return this.apiService.login(email, password);

@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-import { throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
+import { map, delay, tap } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -23,7 +22,7 @@ export interface Document {
   thumbnail: string;
   description: string;
   pages: number;
-  download_url: string;
+  downloadUrl: string;
 }
 
 export interface Video {
@@ -35,7 +34,7 @@ export interface Video {
   thumbnail: string;
   description: string;
   views: number;
-  video_url: string;
+  videoUrl: string;
 }
 
 export interface Settings {
@@ -64,169 +63,256 @@ export interface Settings {
   providedIn: 'root'
 })
 export class ApiService {
-  private baseUrl = 'http://localhost:5000/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor(private http: HttpClient) {
     // Check if user is already logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-      this.getCurrentUser().subscribe({
-        next: (user) => this.currentUserSubject.next(user),
-        error: (error) => {
-          console.error('Error getting current user:', error);
-          this.logout();
-        }
-      });
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
+      this.currentUserSubject.next(JSON.parse(userData));
     }
-  }
-
-  private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
   }
 
   // Authentication methods
   login(email: string, password: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/login`, { email, password })
-      .pipe(
-        tap((response: any) => {
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-            this.currentUserSubject.next(response.user);
-          }
-        }),
-        catchError(this.handleError)
-      );
-  }
-
-  register(userData: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/auth/register`, userData)
-      .pipe(
-        tap((response: any) => {
-          if (response.token) {
-            localStorage.setItem('token', response.token);
-            this.currentUserSubject.next(response.user);
-          }
-        }),
-        catchError(this.handleError)
-      );
-  }
-
-  getCurrentUser(): Observable<User> {
-    return this.http.get<User>(`${this.baseUrl}/auth/me`, {
-      headers: this.getAuthHeaders()
-    }).pipe(
-      catchError(this.handleError)
+    return this.http.get<any>('/src/data/accounts.json').pipe(
+      delay(500), // Simulate network delay
+      map(data => {
+        const user = data.accounts.find((account: any) => 
+          account.email === email && account.password === password
+        );
+        
+        if (user) {
+          const userData = {
+            id: user.id,
+            fullName: user.fullName,
+            email: user.email,
+            avatar: user.avatar,
+            level: user.level,
+            specialty: user.specialty,
+            joinDate: user.joinDate
+          };
+          
+          localStorage.setItem('currentUser', JSON.stringify(userData));
+          localStorage.setItem('isLoggedIn', 'true');
+          this.currentUserSubject.next(userData);
+          
+          return { user: userData, token: 'mock-jwt-token' };
+        } else {
+          throw new Error('Email ou mot de passe incorrect');
+        }
+      })
     );
   }
 
+  register(userData: any): Observable<any> {
+    return this.http.get<any>('/src/data/accounts.json').pipe(
+      delay(500), // Simulate network delay
+      map(data => {
+        // Check if user already exists
+        const existingUser = data.accounts.find((account: any) => 
+          account.email === userData.email
+        );
+        
+        if (existingUser) {
+          throw new Error('Un compte avec cet email existe déjà');
+        }
+        
+        // Create new user
+        const newUser = {
+          id: data.accounts.length + 1,
+          fullName: userData.fullName,
+          email: userData.email,
+          avatar: this.getRandomAvatar(),
+          level: userData.level,
+          specialty: userData.specialty,
+          joinDate: new Date().toISOString().split('T')[0]
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(newUser));
+        localStorage.setItem('isLoggedIn', 'true');
+        this.currentUserSubject.next(newUser);
+        
+        return { user: newUser, token: 'mock-jwt-token' };
+      })
+    );
+  }
+
+  private getRandomAvatar(): string {
+    const avatars = [
+      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+      'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+    ];
+    return avatars[Math.floor(Math.random() * avatars.length)];
+  }
+
+  getCurrentUser(): Observable<User> {
+    const userData = localStorage.getItem('currentUser');
+    if (userData) {
+      return of(JSON.parse(userData));
+    }
+    return throwError(() => new Error('User not found'));
+  }
+
   logout(): void {
-    localStorage.removeItem('token');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('isLoggedIn');
     this.currentUserSubject.next(null);
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+    return localStorage.getItem('isLoggedIn') === 'true';
   }
 
   getCurrentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
 
-  private handleError = (error: HttpErrorResponse) => {
-    console.error('API Error:', error);
-    
-    if (error.status === 0) {
-      // Network error - backend might not be running
-      console.error('Backend server appears to be down. Please check if the Flask server is running on port 5000.');
-      return throwError(() => new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion.'));
-    }
-    
-    if (error.status === 401) {
-      // Unauthorized - invalid credentials or token
-      return throwError(() => new Error('Email ou mot de passe incorrect.'));
-    }
-    
-    if (error.status === 400) {
-      // Bad request - validation error
-      const message = error.error?.message || 'Données invalides.';
-      return throwError(() => new Error(message));
-    }
-    
-    if (error.status >= 500) {
-      // Server error
-      return throwError(() => new Error('Erreur du serveur. Veuillez réessayer plus tard.'));
-    }
-    
-    // Generic error
-    const message = error.error?.message || 'Une erreur est survenue.';
-    return throwError(() => new Error(message));
-  };
-
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
-    let params = new HttpParams();
-    if (filters) {
-      if (filters.search) params = params.set('search', filters.search);
-      if (filters.subject) params = params.set('subject', filters.subject);
-      if (filters.level) params = params.set('level', filters.level);
-      if (filters.type) params = params.set('type', filters.type);
-    }
-    
-    return this.http.get<{ documents: Document[] }>(`${this.baseUrl}/documents`, { params });
+    return this.http.get<any>('/src/data/documents.json').pipe(
+      map(data => {
+        let documents = data.documents;
+        
+        if (filters) {
+          if (filters.search) {
+            const searchTerm = filters.search.toLowerCase();
+            documents = documents.filter((doc: Document) =>
+              doc.title.toLowerCase().includes(searchTerm) ||
+              doc.description.toLowerCase().includes(searchTerm) ||
+              doc.subject.toLowerCase().includes(searchTerm)
+            );
+          }
+          
+          if (filters.subject) {
+            documents = documents.filter((doc: Document) => doc.subject === filters.subject);
+          }
+          
+          if (filters.level) {
+            documents = documents.filter((doc: Document) => doc.level === filters.level);
+          }
+          
+          if (filters.type) {
+            documents = documents.filter((doc: Document) => doc.type === filters.type);
+          }
+        }
+        
+        return { documents };
+      })
+    );
   }
 
   getVideos(filters?: any): Observable<{ videos: Video[] }> {
-    let params = new HttpParams();
-    if (filters) {
-      if (filters.search) params = params.set('search', filters.search);
-      if (filters.subject) params = params.set('subject', filters.subject);
-      if (filters.level) params = params.set('level', filters.level);
-    }
-    
-    return this.http.get<{ videos: Video[] }>(`${this.baseUrl}/videos`, { params });
+    return this.http.get<any>('/src/data/videos.json').pipe(
+      map(data => {
+        let videos = data.videos;
+        
+        if (filters) {
+          if (filters.search) {
+            const searchTerm = filters.search.toLowerCase();
+            videos = videos.filter((video: Video) =>
+              video.title.toLowerCase().includes(searchTerm) ||
+              video.description.toLowerCase().includes(searchTerm) ||
+              video.subject.toLowerCase().includes(searchTerm)
+            );
+          }
+          
+          if (filters.subject) {
+            videos = videos.filter((video: Video) => video.subject === filters.subject);
+          }
+          
+          if (filters.level) {
+            videos = videos.filter((video: Video) => video.level === filters.level);
+          }
+        }
+        
+        return { videos };
+      })
+    );
   }
 
   // Settings methods
   getSettings(): Observable<Settings> {
-    return this.http.get<Settings>(`${this.baseUrl}/settings`, {
-      headers: this.getAuthHeaders()
-    });
+    const defaultSettings: Settings = {
+      theme: 'auto',
+      language: 'fr',
+      notifications: {
+        email: true,
+        push: true,
+        newCourses: true,
+        reminders: false
+      },
+      privacy: {
+        profileVisibility: 'public',
+        showProgress: true,
+        allowMessages: true
+      },
+      preferences: {
+        autoplay: false,
+        subtitles: true,
+        playbackSpeed: 1,
+        downloadQuality: 'medium'
+      }
+    };
+
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      return of({ ...defaultSettings, ...JSON.parse(savedSettings) });
+    }
+    
+    return of(defaultSettings);
   }
 
   updateSettings(settings: Settings): Observable<any> {
-    return this.http.put(`${this.baseUrl}/settings`, settings, {
-      headers: this.getAuthHeaders()
-    });
+    localStorage.setItem('userSettings', JSON.stringify(settings));
+    return of({ message: 'Settings updated successfully' }).pipe(delay(300));
   }
 
   // Progress tracking methods
   getUserProgress(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/progress`, {
-      headers: this.getAuthHeaders()
-    });
+    const progress = localStorage.getItem('userProgress');
+    return of({ progress: progress ? JSON.parse(progress) : [] });
   }
 
   updateProgress(contentType: string, contentId: number, progress: number, completed: boolean = false): Observable<any> {
-    return this.http.post(`${this.baseUrl}/progress`, {
+    const existingProgress = JSON.parse(localStorage.getItem('userProgress') || '[]');
+    const progressItem = {
       contentType,
       contentId,
       progress,
-      completed
-    }, {
-      headers: this.getAuthHeaders()
-    });
+      completed,
+      lastAccessed: new Date().toISOString()
+    };
+    
+    const index = existingProgress.findIndex((p: any) => 
+      p.contentType === contentType && p.contentId === contentId
+    );
+    
+    if (index >= 0) {
+      existingProgress[index] = progressItem;
+    } else {
+      existingProgress.push(progressItem);
+    }
+    
+    localStorage.setItem('userProgress', JSON.stringify(existingProgress));
+    return of({ message: 'Progress updated successfully' }).pipe(delay(200));
   }
 
   // Statistics methods
   getUserStats(): Observable<any> {
-    return this.http.get(`${this.baseUrl}/stats`, {
-      headers: this.getAuthHeaders()
+    const progress = JSON.parse(localStorage.getItem('userProgress') || '[]');
+    const completedCourses = progress.filter((p: any) => p.contentType === 'document' && p.completed).length;
+    const completedExercises = progress.filter((p: any) => p.contentType === 'exercise' && p.completed).length;
+    
+    return of({
+      courses: completedCourses,
+      exercises: completedExercises,
+      successRate: 89,
+      hoursThisWeek: 12
     });
   }
 }
