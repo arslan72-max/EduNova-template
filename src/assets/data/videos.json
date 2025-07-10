@@ -1,0 +1,70 @@
+{
+  "videos": [
+    {
+      "id": 1,
+      "title": "Dérivées et Applications - Cours Complet",
+      "subject": "Mathématiques",
+      "level": "Terminale",
+      "duration": "45:30",
+      "thumbnail": "https://images.pexels.com/photos/3862130/pexels-photo-3862130.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Maîtrisez les dérivées et leurs applications pratiques",
+      "views": 12500,
+      "videoUrl": "#"
+    },
+    {
+      "id": 2,
+      "title": "Électromagnétisme - Lois de Maxwell",
+      "subject": "Physique",
+      "level": "Prépa",
+      "duration": "38:15",
+      "thumbnail": "https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Comprendre les équations de Maxwell",
+      "views": 8900,
+      "videoUrl": "#"
+    },
+    {
+      "id": 3,
+      "title": "Algorithmes de Tri - Comparaison",
+      "subject": "Informatique",
+      "level": "Université",
+      "duration": "52:20",
+      "thumbnail": "https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Analyse des différents algorithmes de tri",
+      "views": 15600,
+      "videoUrl": "#"
+    },
+    {
+      "id": 4,
+      "title": "Réactions Acide-Base",
+      "subject": "Chimie",
+      "level": "Terminale",
+      "duration": "29:45",
+      "thumbnail": "https://images.pexels.com/photos/2280568/pexels-photo-2280568.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Les équilibres acide-base expliqués",
+      "views": 7800,
+      "videoUrl": "#"
+    },
+    {
+      "id": 5,
+      "title": "Analyse Littéraire - Méthodes",
+      "subject": "Français",
+      "level": "Terminale",
+      "duration": "41:10",
+      "thumbnail": "https://images.pexels.com/photos/1370295/pexels-photo-1370295.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Techniques d'analyse des textes littéraires",
+      "views": 9200,
+      "videoUrl": "#"
+    },
+    {
+      "id": 6,
+      "title": "Géométrie dans l'Espace",
+      "subject": "Mathématiques",
+      "level": "Prépa",
+      "duration": "56:30",
+      "thumbnail": "https://images.pexels.com/photos/3862132/pexels-photo-3862132.jpeg?auto=compress&cs=tinysrgb&w=300&h=200&fit=crop",
+      "description": "Maîtriser la géométrie en 3D",
+      "views": 11400,
+      "videoUrl": "#"
+    }
+  ]
+}
