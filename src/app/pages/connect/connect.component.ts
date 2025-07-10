@@ -496,18 +496,39 @@ export class ConnectComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
+    // Basic validation
+    if (!this.formData.email || !this.formData.password) {
+      this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
+      return;
+    }
+
     if (this.isLogin) {
       this.authService.login(this.formData.email, this.formData.password).subscribe({
         next: (response) => {
+          this.successMessage = 'Connexion réussie ! Redirection...';
+          setTimeout(() => {
           this.router.navigate(['/dashboard']);
+          }, 1000);
         },
         error: (error) => {
-          this.errorMessage = 'Email ou mot de passe incorrect';
+          this.errorMessage = error.message || 'Erreur de connexion';
+          console.error('Login error:', error);
         }
       });
     } else {
+      // Additional validation for registration
+      if (!this.formData.fullName || !this.formData.level || !this.formData.specialty) {
+        this.errorMessage = 'Veuillez remplir tous les champs obligatoires.';
+        return;
+      }
+      
       if (this.formData.password !== this.formData.confirmPassword) {
         this.errorMessage = 'Les mots de passe ne correspondent pas';
+        return;
+      }
+      
+      if (this.formData.password.length < 6) {
+        this.errorMessage = 'Le mot de passe doit contenir au moins 6 caractères.';
         return;
       }
       
@@ -541,7 +562,8 @@ export class ConnectComponent {
           }
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Erreur lors de la création du compte';
+          this.errorMessage = error.message || 'Erreur lors de la création du compte';
+          console.error('Registration error:', error);
         }
       });
     }

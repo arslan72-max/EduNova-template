@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 export interface User {
   id: number;
@@ -73,7 +74,10 @@ export class ApiService {
     if (token) {
       this.getCurrentUser().subscribe({
         next: (user) => this.currentUserSubject.next(user),
-        error: () => this.logout()
+        error: (error) => {
+          console.error('Error getting current user:', error);
+          this.logout();
+        }
       });
     }
   }
@@ -95,7 +99,8 @@ export class ApiService {
             localStorage.setItem('token', response.token);
             this.currentUserSubject.next(response.user);
           }
-        })
+        }),
+        catchError(this.handleError)
       );
   }
 
@@ -107,14 +112,17 @@ export class ApiService {
             localStorage.setItem('token', response.token);
             this.currentUserSubject.next(response.user);
           }
-        })
+        }),
+        catchError(this.handleError)
       );
   }
 
   getCurrentUser(): Observable<User> {
     return this.http.get<User>(`${this.baseUrl}/auth/me`, {
       headers: this.getAuthHeaders()
-    });
+    }).pipe(
+      catchError(this.handleError)
+    );
   }
 
   logout(): void {
@@ -129,6 +137,36 @@ export class ApiService {
   getCurrentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
+
+  private handleError = (error: HttpErrorResponse) => {
+    console.error('API Error:', error);
+    
+    if (error.status === 0) {
+      // Network error - backend might not be running
+      console.error('Backend server appears to be down. Please check if the Flask server is running on port 5000.');
+      return throwError(() => new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion.'));
+    }
+    
+    if (error.status === 401) {
+      // Unauthorized - invalid credentials or token
+      return throwError(() => new Error('Email ou mot de passe incorrect.'));
+    }
+    
+    if (error.status === 400) {
+      // Bad request - validation error
+      const message = error.error?.message || 'Données invalides.';
+      return throwError(() => new Error(message));
+    }
+    
+    if (error.status >= 500) {
+      // Server error
+      return throwError(() => new Error('Erreur du serveur. Veuillez réessayer plus tard.'));
+    }
+    
+    // Generic error
+    const message = error.error?.message || 'Une erreur est survenue.';
+    return throwError(() => new Error(message));
+  };
 
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
