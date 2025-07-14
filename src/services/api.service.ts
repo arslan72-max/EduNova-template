@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { map, delay, tap, catchError } from 'rxjs/operators';
+import { map, delay, tap } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -66,11 +66,6 @@ export class ApiService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  // Cache for JSON data
-  private accountsCache: any = null;
-  private documentsCache: any = null;
-  private videosCache: any = null;
-
   constructor(private http: HttpClient) {
     // Check if user is already logged in
     const userData = localStorage.getItem('currentUser');
@@ -79,54 +74,9 @@ export class ApiService {
     }
   }
 
-  // Load accounts data
-  private loadAccounts(): Observable<any> {
-    if (this.accountsCache) {
-      return of(this.accountsCache);
-    }
-    
-    return this.http.get<any>('/assets/data/accounts.json').pipe(
-      tap(data => this.accountsCache = data),
-      catchError(error => {
-        console.error('Error loading accounts:', error);
-        return throwError(() => new Error('Impossible de charger les données des comptes'));
-      })
-    );
-  }
-
-  // Load documents data
-  private loadDocuments(): Observable<any> {
-    if (this.documentsCache) {
-      return of(this.documentsCache);
-    }
-    
-    return this.http.get<any>('/assets/data/documents.json').pipe(
-      tap(data => this.documentsCache = data),
-      catchError(error => {
-        console.error('Error loading documents:', error);
-        return throwError(() => new Error('Impossible de charger les documents'));
-      })
-    );
-  }
-
-  // Load videos data
-  private loadVideos(): Observable<any> {
-    if (this.videosCache) {
-      return of(this.videosCache);
-    }
-    
-    return this.http.get<any>('/assets/data/videos.json').pipe(
-      tap(data => this.videosCache = data),
-      catchError(error => {
-        console.error('Error loading videos:', error);
-        return throwError(() => new Error('Impossible de charger les vidéos'));
-      })
-    );
-  }
-
   // Authentication methods
   login(email: string, password: string): Observable<any> {
-    return this.loadAccounts().pipe(
+    return this.http.get<any>('/assets/data/accounts.json').pipe(
       delay(500), // Simulate network delay
       map(data => {
         const user = data.accounts.find((account: any) => 
@@ -157,7 +107,7 @@ export class ApiService {
   }
 
   register(userData: any): Observable<any> {
-    return this.loadAccounts().pipe(
+    return this.http.get<any>('/assets/data/accounts.json').pipe(
       delay(500), // Simulate network delay
       map(data => {
         // Check if user already exists
@@ -224,7 +174,7 @@ export class ApiService {
 
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
-    return this.loadDocuments().pipe(
+    return this.http.get<any>('/assets/data/documents.json').pipe(
       map(data => {
         let documents = data.documents;
         
@@ -257,7 +207,7 @@ export class ApiService {
   }
 
   getVideos(filters?: any): Observable<{ videos: Video[] }> {
-    return this.loadVideos().pipe(
+    return this.http.get<any>('/assets/data/videos.json').pipe(
       map(data => {
         let videos = data.videos;
         
