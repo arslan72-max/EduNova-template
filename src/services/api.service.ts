@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-import { map, delay, tap } from 'rxjs/operators';
+import { map, delay, tap, catchError } from 'rxjs/operators';
 
 export interface User {
   id: number;
@@ -63,6 +63,7 @@ export interface Settings {
   providedIn: 'root'
 })
 export class ApiService {
+  private baseUrl = 'http://localhost:5000/api';
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -74,80 +75,49 @@ export class ApiService {
     }
   }
 
+  private handleError = (error: any): Observable<never> => {
+    console.error('API Error:', error);
+    
+    if (error.status === 0) {
+      // Network error or CORS issue
+      throw new Error('Impossible de se connecter au serveur. Veuillez vérifier votre connexion.');
+    } else if (error.status === 401) {
+      // Unauthorized
+      throw new Error(error.error?.error || 'Email ou mot de passe incorrect');
+    } else if (error.status === 400) {
+      // Bad request
+      throw new Error(error.error?.error || 'Données invalides');
+    } else {
+      // Other errors
+      throw new Error(error.error?.error || 'Une erreur est survenue');
+    }
+  };
+
   // Authentication methods
   login(email: string, password: string): Observable<any> {
-    return this.http.get<any>('/assets/data/accounts.json').pipe(
-      delay(500), // Simulate network delay
-      map(data => {
-        const user = data.accounts.find((account: any) => 
-          account.email === email && account.password === password
-        );
-        
-        if (user) {
-          const userData = {
-            id: user.id,
-            fullName: user.fullName,
-            email: user.email,
-            avatar: user.avatar,
-            level: user.level,
-            specialty: user.specialty,
-            joinDate: user.joinDate
-          };
-          
-          localStorage.setItem('currentUser', JSON.stringify(userData));
+    return this.http.post<any>(`${this.baseUrl}/auth/login`, { email, password }).pipe(
+      tap(response => {
+        if (response.user) {
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
           localStorage.setItem('isLoggedIn', 'true');
-          this.currentUserSubject.next(userData);
-          
-          return { user: userData, token: 'mock-jwt-token' };
-        } else {
-          throw new Error('Email ou mot de passe incorrect');
+          this.currentUserSubject.next(response.user);
         }
-      })
+      }),
+      catchError(this.handleError)
     );
   }
 
   register(userData: any): Observable<any> {
-    return this.http.get<any>('/assets/data/accounts.json').pipe(
-      delay(500), // Simulate network delay
-      map(data => {
-        // Check if user already exists
-        const existingUser = data.accounts.find((account: any) => 
-          account.email === userData.email
-        );
-        
-        if (existingUser) {
-          throw new Error('Un compte avec cet email existe déjà');
+    return this.http.post<any>(`${this.baseUrl}/auth/register`, userData).pipe(
+      tap(response => {
+        if (response.user) {
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
+          localStorage.setItem('isLoggedIn', 'true');
+          this.currentUserSubject.next(response.user);
         }
-        
-        // Create new user
-        const newUser = {
-          id: data.accounts.length + 1,
-          fullName: userData.fullName,
-          email: userData.email,
-          avatar: this.getRandomAvatar(),
-          level: userData.level,
-          specialty: userData.specialty,
-          joinDate: new Date().toISOString().split('T')[0]
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(newUser));
-        localStorage.setItem('isLoggedIn', 'true');
-        this.currentUserSubject.next(newUser);
-        
-        return { user: newUser, token: 'mock-jwt-token' };
-      })
+      }),
+      catchError(this.handleError)
     );
-  }
-
-  private getRandomAvatar(): string {
-    const avatars = [
-      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-    ];
-    return avatars[Math.floor(Math.random() * avatars.length)];
   }
 
   getCurrentUser(): Observable<User> {
@@ -174,102 +144,97 @@ export class ApiService {
 
   // Content methods
   getDocuments(filters?: any): Observable<{ documents: Document[] }> {
-    return this.http.get<any>('/assets/data/documents.json').pipe(
-      map(data => {
-        let documents = data.documents;
-        
-        if (filters) {
-          if (filters.search) {
-            const searchTerm = filters.search.toLowerCase();
-            documents = documents.filter((doc: Document) =>
-              doc.title.toLowerCase().includes(searchTerm) ||
-              doc.description.toLowerCase().includes(searchTerm) ||
-              doc.subject.toLowerCase().includes(searchTerm)
-            );
-          }
-          
-          if (filters.subject) {
-            documents = documents.filter((doc: Document) => doc.subject === filters.subject);
-          }
-          
-          if (filters.level) {
-            documents = documents.filter((doc: Document) => doc.level === filters.level);
-          }
-          
-          if (filters.type) {
-            documents = documents.filter((doc: Document) => doc.type === filters.type);
-          }
-        }
-        
-        return { documents };
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.subject) params = params.set('subject', filters.subject);
+      if (filters.level) params = params.set('level', filters.level);
+      if (filters.type) params = params.set('type', filters.type);
+    }
+    
+    return this.http.get<{ documents: Document[] }>(`${this.baseUrl}/documents`, { params }).pipe(
+      catchError(error => {
+        console.error('Error loading documents:', error);
+        // Fallback to static data if backend is unavailable
+        return this.http.get<any>('/assets/data/documents.json').pipe(
+          map(data => ({ documents: data.documents }))
+        );
       })
     );
   }
 
   getVideos(filters?: any): Observable<{ videos: Video[] }> {
-    return this.http.get<any>('/assets/data/videos.json').pipe(
-      map(data => {
-        let videos = data.videos;
-        
-        if (filters) {
-          if (filters.search) {
-            const searchTerm = filters.search.toLowerCase();
-            videos = videos.filter((video: Video) =>
-              video.title.toLowerCase().includes(searchTerm) ||
-              video.description.toLowerCase().includes(searchTerm) ||
-              video.subject.toLowerCase().includes(searchTerm)
-            );
-          }
-          
-          if (filters.subject) {
-            videos = videos.filter((video: Video) => video.subject === filters.subject);
-          }
-          
-          if (filters.level) {
-            videos = videos.filter((video: Video) => video.level === filters.level);
-          }
-        }
-        
-        return { videos };
+    let params = new HttpParams();
+    
+    if (filters) {
+      if (filters.search) params = params.set('search', filters.search);
+      if (filters.subject) params = params.set('subject', filters.subject);
+      if (filters.level) params = params.set('level', filters.level);
+    }
+    
+    return this.http.get<{ videos: Video[] }>(`${this.baseUrl}/videos`, { params }).pipe(
+      catchError(error => {
+        console.error('Error loading videos:', error);
+        // Fallback to static data if backend is unavailable
+        return this.http.get<any>('/assets/data/videos.json').pipe(
+          map(data => ({ videos: data.videos }))
+        );
       })
     );
   }
 
   // Settings methods
   getSettings(): Observable<Settings> {
-    const defaultSettings: Settings = {
-      theme: 'auto',
-      language: 'fr',
-      notifications: {
-        email: true,
-        push: true,
-        newCourses: true,
-        reminders: false
-      },
-      privacy: {
-        profileVisibility: 'public',
-        showProgress: true,
-        allowMessages: true
-      },
-      preferences: {
-        autoplay: false,
-        subtitles: true,
-        playbackSpeed: 1,
-        downloadQuality: 'medium'
-      }
-    };
+    return this.http.get<Settings>(`${this.baseUrl}/user/settings`).pipe(
+      catchError(error => {
+        console.error('Error loading settings:', error);
+        // Fallback to localStorage
+        const defaultSettings: Settings = {
+          theme: 'auto',
+          language: 'fr',
+          notifications: {
+            email: true,
+            push: true,
+            newCourses: true,
+            reminders: false
+          },
+          privacy: {
+            profileVisibility: 'public',
+            showProgress: true,
+            allowMessages: true
+          },
+          preferences: {
+            autoplay: false,
+            subtitles: true,
+            playbackSpeed: 1,
+            downloadQuality: 'medium'
+          }
+        };
 
-    const savedSettings = localStorage.getItem('userSettings');
-    if (savedSettings) {
-      return of({ ...defaultSettings, ...JSON.parse(savedSettings) });
-    }
-    
-    return of(defaultSettings);
+        const savedSettings = localStorage.getItem('userSettings');
+        if (savedSettings) {
+          return of({ ...defaultSettings, ...JSON.parse(savedSettings) });
+        }
+        
+        return of(defaultSettings);
+      })
+    );
   }
 
   updateSettings(settings: Settings): Observable<any> {
-    localStorage.setItem('userSettings', JSON.stringify(settings));
-    return of({ message: 'Settings updated successfully' }).pipe(delay(300));
+    return this.http.put<any>(`${this.baseUrl}/user/settings`, settings).pipe(
+      tap(() => {
+        // Also save to localStorage as backup
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+      }),
+      catchError(error => {
+        console.error('Error updating settings:', error);
+        // Fallback to localStorage
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+        return of({ message: 'Settings updated successfully' }).pipe(delay(300));
+      })
+    );
   }
 
   // Progress tracking methods
@@ -304,15 +269,21 @@ export class ApiService {
 
   // Statistics methods
   getUserStats(): Observable<any> {
-    const progress = JSON.parse(localStorage.getItem('userProgress') || '[]');
-    const completedCourses = progress.filter((p: any) => p.contentType === 'document' && p.completed).length;
-    const completedExercises = progress.filter((p: any) => p.contentType === 'exercise' && p.completed).length;
-    
-    return of({
-      courses: completedCourses,
-      exercises: completedExercises,
-      successRate: 89,
-      hoursThisWeek: 12
-    });
+    return this.http.get<any>(`${this.baseUrl}/user/stats`).pipe(
+      catchError(error => {
+        console.error('Error loading user stats:', error);
+        // Fallback to local calculation
+        const progress = JSON.parse(localStorage.getItem('userProgress') || '[]');
+        const completedCourses = progress.filter((p: any) => p.contentType === 'document' && p.completed).length;
+        const completedExercises = progress.filter((p: any) => p.contentType === 'exercise' && p.completed).length;
+        
+        return of({
+          courses: completedCourses,
+          exercises: completedExercises,
+          successRate: 89,
+          hoursThisWeek: 12
+        });
+      })
+    );
   }
 }
