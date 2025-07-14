@@ -15,6 +15,40 @@ def load_json_data(filename):
     except FileNotFoundError:
         return {}
 
+# Backend-only demo accounts
+BACKEND_ACCOUNTS = [
+    {
+        "id": 101,
+        "fullName": "Ahmed Ben Ali",
+        "email": "ahmed.benali@email.com",
+        "password": "password123",
+        "avatar": "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+        "level": "Terminale",
+        "specialty": "Sciences Mathématiques",
+        "joinDate": "2024-01-15"
+    },
+    {
+        "id": 102,
+        "fullName": "Fatima Trabelsi",
+        "email": "fatima.trabelsi@email.com",
+        "password": "password123",
+        "avatar": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+        "level": "1ère année Prépa",
+        "specialty": "Physique-Chimie",
+        "joinDate": "2024-02-20"
+    },
+    {
+        "id": 103,
+        "fullName": "Mohamed Khelifi",
+        "email": "mohamed.khelifi@email.com",
+        "password": "password123",
+        "avatar": "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop",
+        "level": "2ème année Prépa",
+        "specialty": "Mathématiques-Informatique",
+        "joinDate": "2023-09-10"
+    }
+]
+
 # Authentication endpoints
 @app.route('/api/auth/login', methods=['POST'])
 def login():
@@ -22,10 +56,14 @@ def login():
     email = data.get('email')
     password = data.get('password')
     
-    accounts_data = load_json_data('accounts.json')
-    accounts = accounts_data.get('accounts', [])
+    # Check backend accounts first
+    user = next((account for account in BACKEND_ACCOUNTS if account['email'] == email and account['password'] == password), None)
     
-    user = next((account for account in accounts if account['email'] == email and account['password'] == password), None)
+    # If not found in backend, check JSON file accounts
+    if not user:
+        accounts_data = load_json_data('accounts.json')
+        accounts = accounts_data.get('accounts', [])
+        user = next((account for account in accounts if account['email'] == email and account['password'] == password), None)
     
     if user:
         user_data = {
@@ -45,17 +83,20 @@ def login():
 def register():
     data = request.get_json()
     
+    # Combine backend and JSON accounts for duplicate check
+    all_accounts = BACKEND_ACCOUNTS.copy()
     accounts_data = load_json_data('accounts.json')
-    accounts = accounts_data.get('accounts', [])
+    json_accounts = accounts_data.get('accounts', [])
+    all_accounts.extend(json_accounts)
     
     # Check if user already exists
-    existing_user = next((account for account in accounts if account['email'] == data['email']), None)
+    existing_user = next((account for account in all_accounts if account['email'] == data['email']), None)
     if existing_user:
         return jsonify({'error': 'Un compte avec cet email existe déjà'}), 400
     
     # Create new user
     new_user = {
-        'id': len(accounts) + 1,
+        'id': len(all_accounts) + 1,
         'fullName': data['fullName'],
         'email': data['email'],
         'avatar': get_random_avatar(),

@@ -459,12 +459,12 @@ export class ConnectComponent {
   };
 
   demoAccounts = [
-    { name: 'Ahmed Ben Ali (Terminale)', email: 'ahmed.benali@email.com', password: 'password123' },
-    { name: 'Fatima Trabelsi (Prépa)', email: 'fatima.trabelsi@email.com', password: 'password123' },
-    { name: 'Mohamed Khelifi (Prépa)', email: 'mohamed.khelifi@email.com', password: 'password123' },
+    { name: 'Ahmed Ben Ali (Backend - Terminale)', email: 'ahmed.benali@email.com', password: 'password123' },
+    { name: 'Fatima Trabelsi (Backend - Prépa)', email: 'fatima.trabelsi@email.com', password: 'password123' },
+    { name: 'Mohamed Khelifi (Backend - Prépa)', email: 'mohamed.khelifi@email.com', password: 'password123' },
     { name: 'Salma Bouazizi (Terminale)', email: 'salma.bouazizi@email.com', password: 'password123' },
     { name: 'Youssef Mansouri (Université)', email: 'youssef.mansouri@email.com', password: 'password123' },
-    { name: 'Raslene Haddaji (Prépa Tech)', email: 'raslene.haddaji@email.com', password: 'password123' }
+    { name: 'Raslene Haddaji (JSON - Prépa Tech)', email: 'raslene.haddaji@email.com', password: 'password123' }
   ];
 
   constructor(
